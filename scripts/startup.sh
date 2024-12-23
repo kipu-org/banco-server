@@ -6,4 +6,4 @@ if [[ $AMBOSS_ADD_ENVS ]]; then
 fi
 
 # Start server
-npm run start:prod
+pnpm run start:prod

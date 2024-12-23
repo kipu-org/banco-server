@@ -11,38 +11,45 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+            ${{ runner.os }}-pnpm-store-
 
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
 
-      - name: Install modules
-        run: npm ci
- 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --recursive
+
       - name: Generate Prisma client
         env:
           SCHEMA_DIR: './node_modules/@prisma/client'
         run: |
-          npm run prisma:generate
+          pnpm run prisma:generate
 
       - name: Run eslint
-        run: npm run lint:check
+        run: pnpm run lint:check
 
       - name: Run tests
-        run: npm run test
+        run: pnpm run test
 
   test_banco_build:
     if: github.head_ref != 'develop'

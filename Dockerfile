@@ -1,54 +1,59 @@
-FROM node:20.11.1-alpine as base
+FROM node:20.11.1-alpine AS base
 
 # ---------------
-# Install Dependencies
+# Setup for deps and build
 # ---------------
-FROM base as deps
+FROM base AS setup
 
-RUN apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-WORKDIR /app
-
+ENV PNPM_HOME=/usr/local/bin
 ENV DISABLE_OPENCOLLECTIVE=true
 
-COPY package*.json ./
-COPY lwk_wasm-0.7.0.tgz ./
-
-# Install app dependencies
-RUN npm ci
-
-# ---------------
-# Build App
-# ---------------
-FROM deps as build
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
+COPY . /app
 
-COPY . .
+# ---------------
+# Install dependencies
+# ---------------
+FROM setup AS deps
 
-# Generate Prisma clients
-RUN npm run prisma:generate
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm i -g prisma
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm run prisma:generate
 
-# Build NestJS application
-RUN npm run build
+# ---------------
+# Build app
+# ---------------
+FROM deps AS build
 
-# Remove non production necessary modules
-RUN npm prune --production
+RUN pnpm run build
+
+# ---------------
+# Remove dev deps
+# ---------------
+FROM deps AS prod-deps
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm prune --prod --ignore-scripts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm run prisma:generate
 
 # ---------------
 # Final App
 # ---------------
 FROM base
 
+RUN npm i -g pnpm
+
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /app
 
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package*.json ./
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist/ ./dist/
-COPY /mail/ ./mail/
+COPY package.json ./
 
 EXPOSE 3000
 

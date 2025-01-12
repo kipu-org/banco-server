@@ -319,6 +319,9 @@ export class WalletMutations {
   @Field(() => Boolean)
   change_name: boolean;
 
+  @Field(() => Boolean)
+  change_money_address: boolean;
+
   @Field(() => CreateOnchainAddress)
   create_onchain_address: CreateOnchainAddress;
 

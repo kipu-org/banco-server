@@ -679,6 +679,7 @@ type WalletDetails {
 
 type WalletMutations {
   broadcast_liquid_transaction(input: BroadcastLiquidTransactionInput!): BroadcastLiquidTransaction!
+  change_money_address(id: String!, money_address_user: String!): Boolean!
   change_name(id: String!, name: String!): Boolean!
   create(input: CreateWalletInput!): CreateWallet!
   create_lightning_invoice(input: CreateLightingInvoiceInput!): CreateLightingInvoice!

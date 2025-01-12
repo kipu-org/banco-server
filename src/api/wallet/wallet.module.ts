@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AmbossModule } from 'src/libs/amboss/amboss.module';
 import { BoltzRestModule } from 'src/libs/boltz/boltz.module';
 import { EsploraServiceModule } from 'src/libs/esplora/esplora.module';
 import { FiatModule } from 'src/libs/fiat/fiat.module';
@@ -7,6 +8,7 @@ import { MailModule } from 'src/libs/mail/mail.module';
 import { RedlockModule } from 'src/libs/redlock/redlock.module';
 import { SideShiftModule } from 'src/libs/sideshift/sideshift.module';
 import { WalletServiceModule } from 'src/libs/wallet/wallet.module';
+import { AccountRepoModule } from 'src/repo/account/account.module';
 import { WalletRepoModule } from 'src/repo/wallet/wallet.module';
 
 import {
@@ -40,6 +42,8 @@ import {
     RedlockModule,
     MailModule,
     BoltzRestModule,
+    AmbossModule,
+    AccountRepoModule,
   ],
   providers: [
     MainWalletMutationsResolver,

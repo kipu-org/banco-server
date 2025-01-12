@@ -17,6 +17,17 @@ export class WalletRepoService {
     });
   }
 
+  async updateWalletMoneyAddress(
+    account_id: string,
+    wallet_id: string,
+    money_address_user: string,
+  ) {
+    return this.prisma.wallet_on_accounts.update({
+      where: { account_id_wallet_id: { wallet_id, account_id } },
+      data: { money_address_user },
+    });
+  }
+
   async countAccountWallets(account_id: string) {
     return this.prisma.wallet_on_accounts.count({ where: { account_id } });
   }

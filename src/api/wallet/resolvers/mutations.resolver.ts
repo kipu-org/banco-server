@@ -6,8 +6,10 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import { each } from 'async';
+import { isAlphanumeric } from 'class-validator';
 import { GraphQLError } from 'graphql';
 import { CurrentUser } from 'src/auth/auth.decorators';
+import { AmbossService } from 'src/libs/amboss/amboss.service';
 import { encodeBip21 } from 'src/libs/bitcoin/bitcoin.utils';
 import { BoltzService } from 'src/libs/boltz/boltz.service';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
@@ -21,6 +23,7 @@ import {
   SideShiftNetwork,
 } from 'src/libs/sideshift/sideshift.types';
 import { WalletService } from 'src/libs/wallet/wallet.service';
+import { AccountRepo } from 'src/repo/account/account.repo';
 import { BoltzChain } from 'src/repo/swaps/swaps.types';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { LiquidWalletAssets } from 'src/repo/wallet/wallet.types';
@@ -50,6 +53,8 @@ export class WalletMutationsResolver {
     private cryptoService: CryptoService,
     private redlockService: RedlockService,
     private boltzService: BoltzService,
+    private ambossService: AmbossService,
+    private accountRepo: AccountRepo,
     @Logger('WalletMutationsResolver') private logger: CustomLogger,
   ) {}
 
@@ -168,6 +173,72 @@ export class WalletMutationsResolver {
     }
 
     const wallet = await this.walletRepo.updateWalletName(user_id, id, name);
+
+    if (!wallet) {
+      throw new GraphQLError('No wallet found');
+    }
+
+    return true;
+  }
+
+  @ResolveField()
+  async change_money_address(
+    @Args('id') id: string,
+    @Args('money_address_user') money_address_user: string,
+    @CurrentUser() { user_id }: any,
+  ) {
+    if (!money_address_user) {
+      throw new GraphQLError('No money address name was provided');
+    }
+
+    if (!isAlphanumeric(money_address_user)) {
+      throw new GraphQLError(
+        'Only letters and numbers can be used for the money address',
+      );
+    }
+
+    if (money_address_user.length > 20) {
+      throw new GraphQLError(
+        'The money address name has to be shorter than 20 characters',
+      );
+    }
+
+    if (money_address_user.length < 4) {
+      throw new GraphQLError(
+        'The money address name needs to be longer than 4 characters',
+      );
+    }
+
+    const account = await this.accountRepo.findOneById(user_id);
+
+    if (!account) {
+      throw new GraphQLError('Account not found');
+    }
+
+    const referrals = await this.ambossService.getReferralCodes(account.email);
+
+    if (!referrals.length) {
+      throw new GraphQLError(
+        'You need to refer at least five new friends to be able to change your money address',
+      );
+    }
+
+    const amountOfReferrals = referrals.reduce((p, c) => {
+      if (!c.current_uses) return p;
+      return p + c.current_uses;
+    }, 0);
+
+    if (amountOfReferrals < 5) {
+      throw new GraphQLError(
+        'You need to refer at least five new friends to be able to change your money address',
+      );
+    }
+
+    const wallet = await this.walletRepo.updateWalletMoneyAddress(
+      user_id,
+      id,
+      money_address_user,
+    );
 
     if (!wallet) {
       throw new GraphQLError('No wallet found');

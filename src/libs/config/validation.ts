@@ -4,7 +4,12 @@ export type ConfigSchemaType = z.infer<typeof ConfigSchema>;
 
 export const ConfigSchema = z.object({
   server: z.object({
-    encryptionKey: z.string().min(64),
+    encryptionKey: z
+      .string()
+      .regex(
+        /^[0-9A-Fa-f]{64}$/g,
+        'Encryption key needs to be a 64 character hex string',
+      ),
     fallbackRedirectUrl: z.string().optional(),
     domains: z.array(z.string()),
     cookies: z.object({

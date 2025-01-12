@@ -321,7 +321,7 @@ export class AccountResolver {
 
     if (referral_code) {
       newAccount = await this.redlockService.using<account>(
-        referral_code,
+        `${normalizedEmail}-${referral_code}`,
         async () => {
           const { can_signup, using_referral_code } =
             await this.ambossService.canSignup(normalizedEmail, referral_code);
@@ -336,7 +336,7 @@ export class AccountResolver {
           });
 
           if (using_referral_code) {
-            await this.ambossService.useRefferalCode(
+            await this.ambossService.useReferralCode(
               referral_code,
               normalizedEmail,
             );

@@ -78,6 +78,15 @@ input CreateOnchainAddressInput {
   wallet_account_id: String!
 }
 
+input CreateReferralInput {
+  max_allowed_uses: Float
+  referral_code: String
+}
+
+type CreateReferralResult {
+  success: Boolean!
+}
+
 type CreateTwoFactorOTP {
   otp_secret: String!
   otp_url: String!
@@ -231,6 +240,7 @@ type Mutation {
   passkey: PasskeyMutations!
   password: PasswordMutations!
   pay(input: PayInput!): PayMutations!
+  referrals: ReferralMutations!
   refreshToken: RefreshToken!
   signUp(input: SignUpInput!): NewAccount!
   two_factor: TwoFactorMutations!
@@ -407,6 +417,10 @@ type ReferralCode {
   id: String!
   is_available: Boolean!
   max_allowed_uses: Float!
+}
+
+type ReferralMutations {
+  create(input: CreateReferralInput!): CreateReferralResult!
 }
 
 type RefreshToken {

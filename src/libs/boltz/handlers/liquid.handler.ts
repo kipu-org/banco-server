@@ -19,6 +19,7 @@ import {
 import ECPairFactory, { ECPairInterface } from 'ecpair';
 import { address, crypto, networks, Transaction } from 'liquidjs-lib';
 import { CustomLogger, Logger } from 'src/libs/logging';
+import { SwapsRepoService } from 'src/repo/swaps/swaps.repo';
 import { BoltzSwapType } from 'src/repo/swaps/swaps.types';
 import { toWithError } from 'src/utils/async';
 import * as ecc from 'tiny-secp256k1';
@@ -44,6 +45,7 @@ export class BoltzPendingLiquidHandler
   constructor(
     private boltzRest: BoltzRestApi,
     private configService: ConfigService,
+    private swapsRepo: SwapsRepoService,
     @Logger(BoltzPendingLiquidHandler.name) private logger: CustomLogger,
   ) {
     const network = this.configService.get('server.boltz.network');
@@ -367,8 +369,23 @@ export class BoltzPendingLiquidHandler
     );
     const tweakedKey = getTweakedKey(musig, swapTree, true);
 
-    const lockupTransaction =
-      await this.boltzRest.getSubmarineLockupTransaction(responsePayload.id);
+    const [lockupTransaction, lockupError] = await toWithError(
+      this.boltzRest.getSubmarineLockupTransaction(responsePayload.id),
+    );
+
+    if (lockupError) {
+      if (lockupError.message == 'no coins were locked up yet') {
+        this.logger.debug(`No refund needed for swap`, {
+          swapId: responsePayload.id,
+        });
+        await this.swapsRepo.markCompleted(responsePayload.id);
+      }
+
+      this.logger.error(`Uncatched error on getting submarine swap lockup tx`, {
+        lockupError,
+      });
+      throw new Error(`No submarine lockup transaction found`);
+    }
 
     // Parse the lockup transaction and find the output relevant for the swap
     const lockupTx = Transaction.fromHex(lockupTransaction.hex);

@@ -370,7 +370,7 @@ export class BoltzPendingLiquidHandler
     const tweakedKey = getTweakedKey(musig, swapTree, true);
 
     const [lockupTransaction, lockupError] = await toWithError(
-      this.boltzRest.getSubmarineLockupTransaction(responsePayload.id),
+      this.boltzRest.getSubmarineLockupTransaction(swap.id),
     );
 
     if (lockupError) {

@@ -370,7 +370,7 @@ export class BoltzPendingLiquidHandler
     const tweakedKey = getTweakedKey(musig, swapTree, true);
 
     const [lockupTransaction, lockupError] = await toWithError(
-      this.boltzRest.getSubmarineLockupTransaction(swap.id),
+      this.boltzRest.getSubmarineLockupTransaction(responsePayload.id),
     );
 
     if (lockupError) {
@@ -378,7 +378,7 @@ export class BoltzPendingLiquidHandler
         this.logger.debug(`No refund needed for swap`, {
           swapId: responsePayload.id,
         });
-        await this.swapsRepo.markCompleted(responsePayload.id);
+        await this.swapsRepo.markCompleted(swap.id);
       }
 
       this.logger.error(`Uncatched error on getting submarine swap lockup tx`, {

@@ -228,9 +228,9 @@ export class WalletMutationsResolver {
       return p + c.current_uses;
     }, 0);
 
-    if (amountOfReferrals < 5) {
+    if (amountOfReferrals < 2) {
       throw new GraphQLError(
-        'You need to refer at least five new friends to be able to change your money address',
+        'You need to refer at least two new friends to be able to change your money address',
       );
     }
 

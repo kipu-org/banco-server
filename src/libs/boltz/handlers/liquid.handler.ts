@@ -379,6 +379,7 @@ export class BoltzPendingLiquidHandler
           swapId: responsePayload.id,
         });
         await this.swapsRepo.markCompleted(swap.id);
+        return;
       }
 
       this.logger.error(`Uncatched error on getting submarine swap lockup tx`, {

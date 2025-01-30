@@ -280,45 +280,41 @@ export class WalletMutationsResolver {
     }: CreateLightingInvoiceInput,
     @CurrentUser() { user_id }: any,
   ) {
+    const walletAccount = await this.walletRepo.getAccountWalletAccount(
+      user_id,
+      wallet_account_id,
+    );
+
+    if (!walletAccount) {
+      throw new GraphQLError('Wallet account not found');
+    }
+
+    const boltzInfo = await this.boltzService.getReverseSwapInfo();
+
+    const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
+
+    if (amount > maximal) {
+      throw new GraphQLError(`Maximum amount is ${maximal} sats`);
+    }
+
+    if (amount < minimal) {
+      throw new GraphQLError(`Mimimum amount is ${minimal} sats`);
+    }
+
+    const descriptor = this.cryptoService.decryptString(
+      walletAccount.details.local_protected_descriptor,
+    );
+
+    const address = await this.liquidService.getOnchainAddress(
+      descriptor,
+      true,
+    );
+
+    const description =
+      invoice_description ||
+      `Pay to ${walletAccount.walletOnAccount.money_address_user}`;
+
     try {
-      const walletAccount = await this.walletRepo.getAccountWalletAccount(
-        user_id,
-        wallet_account_id,
-      );
-
-      if (!walletAccount) {
-        throw new GraphQLError('Wallet account not found');
-      }
-
-      const boltzInfo = await this.boltzService.getReverseSwapInfo();
-
-      const { maximal, minimal } = boltzInfo.BTC['L-BTC'].limits;
-
-      if (maximal < amount) {
-        throw new GraphQLError(
-          `Amount ${amount} greater than maximum of ${maximal}`,
-        );
-      }
-
-      if (minimal > amount) {
-        throw new GraphQLError(
-          `Amount ${amount} smaller than minimum of ${minimal}`,
-        );
-      }
-
-      const descriptor = this.cryptoService.decryptString(
-        walletAccount.details.local_protected_descriptor,
-      );
-
-      const address = await this.liquidService.getOnchainAddress(
-        descriptor,
-        true,
-      );
-
-      const description =
-        invoice_description ||
-        `Pay to ${walletAccount.walletOnAccount.money_address_user}`;
-
       const swap = await this.boltzService.createReverseSwap({
         address: address.address().toString(),
         amount,

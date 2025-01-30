@@ -320,6 +320,7 @@ export class PayService {
                 this.logger.error('Error processing payment', {
                   addressResult,
                   addressError,
+                  money_address,
                 });
 
                 throw new Error('Unable to process Lightning payment');
@@ -359,6 +360,7 @@ export class PayService {
                 this.logger.error('Error processing payment', {
                   result,
                   error,
+                  money_address,
                 });
                 throw new Error('Error processing payment');
               }

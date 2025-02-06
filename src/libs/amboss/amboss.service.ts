@@ -22,9 +22,10 @@ export class AmbossService {
     private config: ConfigService,
     @Logger(AmbossService.name) private logger: CustomLogger,
   ) {
+    const isProduction = this.config.get('isProduction');
     this.baseUrl = this.config.get('amboss.url');
     this.secret = this.config.get('amboss.secret');
-    this.hasAmbossAccess = !!this.baseUrl && !!this.secret;
+    this.hasAmbossAccess = !!this.baseUrl && !!this.secret && isProduction;
   }
 
   async getReferralCodes(email: string): Promise<AmbossReferralCode[]> {

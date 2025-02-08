@@ -15,13 +15,12 @@ import {
 import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 
-import { BoltzRestApi } from '../boltz/boltz.rest';
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import { GetUpdatedWalletAutoType, LiquidRedisCache } from './liquid.types';
 import { getWalletFromDescriptor } from './lwk.utils';
 
-export const DEFAULT_LIQUID_FEE_MSAT = 100;
+export const DEFAULT_LIQUID_FEE_MSAT = 15;
 /**
  * expressed denominated in virtual bytes
  * example: https://liquid.network/nl/tx/cd1f68dc9a47949c79e06aff35137aa75fef6e191a1e57a5f5fc1ff09fd809d3
@@ -38,7 +37,6 @@ const getBlockedAddressKey = (address: string) =>
 export class LiquidService {
   constructor(
     private redis: RedisService,
-    private boltz: BoltzRestApi,
     private config: ConfigService,
     @Logger('LiquidService') private logger: CustomLogger,
   ) {}
@@ -175,11 +173,16 @@ export class LiquidService {
   async broadcastPset(base64_pset: string): Promise<string> {
     const pset = new Pset(base64_pset);
 
-    const tx_hex = pset.extractTx().toString();
+    const liquidEsploraUrl = this.config.getOrThrow('urls.esplora.liquid');
 
-    const tx = await this.boltz.broadcastTx(tx_hex, 'L-BTC');
-
-    return tx.id;
+    const res = await fetch(`${liquidEsploraUrl}/tx`, {
+      method: 'POST',
+      body: pset.extractTx().toString(),
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
+    return res.text();
   }
 
   async getOnchainAddress(

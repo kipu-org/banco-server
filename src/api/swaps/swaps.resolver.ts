@@ -59,7 +59,6 @@ export class WalletSwapsResolver {
 
   @ResolveField()
   async find_many(@Parent() { wallet_id }: WalletSwapsParent) {
-    const swaps = await this.swapRepo.getWalletSwaps(wallet_id);
-    return [swaps[0], swaps[1]];
+    return this.swapRepo.getWalletSwaps(wallet_id);
   }
 }

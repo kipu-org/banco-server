@@ -11,7 +11,7 @@ import {
   TxBuilder,
   Update,
   Wollet,
-} from 'lwk_wasm';
+} from 'lwk_node';
 import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 

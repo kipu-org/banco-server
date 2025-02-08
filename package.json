@@ -63,7 +63,7 @@
     "js-yaml": "^4.1.0",
     "liquidjs-lib": "^6.0.2-liquid.35",
     "lodash": "^4.17.21",
-    "lwk_wasm": "file:lwk_wasm-0.7.0.tgz",
+    "lwk_node": "^0.8.6",
     "mailgun.js": "^10.4.0",
     "nostr-tools": "^2.10.3",
     "otpauth": "^9.3.5",

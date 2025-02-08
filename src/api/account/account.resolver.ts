@@ -137,7 +137,7 @@ export class UserWalletInfoResolver {
 
   @ResolveField()
   async wallet_limit() {
-    return 2;
+    return 5;
   }
 }
 

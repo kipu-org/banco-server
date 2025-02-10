@@ -158,7 +158,7 @@ export const boltzChainTxsResponse = z.object({
       }),
       timeout: z.object({
         blockHeight: z.number(),
-        eta: z.number(),
+        eta: z.number().optional(),
       }),
     })
     .optional(),

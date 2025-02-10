@@ -6,7 +6,7 @@ import {
   registerEnumType,
 } from '@nestjs/graphql';
 import { wallet, wallet_account, wallet_on_accounts } from '@prisma/client';
-import { WalletTx, Wollet } from 'lwk_node';
+import { WalletTx, Wollet } from 'lwk_wasm';
 import {
   SideShiftCoin,
   SideShiftNetwork,

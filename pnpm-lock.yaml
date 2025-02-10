@@ -122,9 +122,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      lwk_node:
-        specifier: ^0.8.6
-        version: 0.8.6
+      lwk_wasm:
+        specifier: file:lwk-wasm-0.8.4.tgz
+        version: file:lwk-wasm-0.8.4.tgz
       mailgun.js:
         specifier: ^10.4.0
         version: 10.4.0
@@ -3689,8 +3689,9 @@ packages:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
     engines: {node: '>=12'}
 
-  lwk_node@0.8.6:
-    resolution: {integrity: sha512-UgQEww/ARBySvSz6oP+/TaUAiDJzJsIdHTkhg9bj2DgT9uWVNLzYjcjcyyw3UR5hP8Kc61FjGKrsDPtRANhHHg==}
+  lwk_wasm@file:lwk-wasm-0.8.4.tgz:
+    resolution: {integrity: sha512-EI+NHHTR9hV1vaRBw+D1C4An0ca0t5zSdi/G5yaxLKQT5jZOdeXsb42qFxezH2aChzr1JocxxyDJVAXxuTIrIw==, tarball: file:lwk-wasm-0.8.4.tgz}
+    version: 0.8.4
 
   magic-string@0.30.8:
     resolution: {integrity: sha512-ISQTe55T2ao7XtlAStud6qwYPZjE4GK1S/BeVPus4jrq6JuOnQ00YKQC581RWhR122W7msZV263KzVeLoqidyQ==}
@@ -9452,7 +9453,7 @@ snapshots:
 
   lru-cache@7.18.3: {}
 
-  lwk_node@0.8.6: {}
+  lwk_wasm@file:lwk-wasm-0.8.4.tgz: {}
 
   magic-string@0.30.8:
     dependencies:

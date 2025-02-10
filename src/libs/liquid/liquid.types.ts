@@ -1,4 +1,4 @@
-import { Update, Wollet } from 'lwk_node';
+import { Update, Wollet } from 'lwk_wasm';
 
 export type GetUpdatedWalletAutoType = {
   getUpdates: {

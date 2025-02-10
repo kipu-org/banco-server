@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { auto } from 'async';
+import { GraphQLError } from 'graphql';
 import {
   Address,
   AddressResult,
@@ -11,16 +12,16 @@ import {
   TxBuilder,
   Update,
   Wollet,
-} from 'lwk_node';
+} from 'lwk_wasm';
 import { PayLiquidAddressInput } from 'src/api/pay/pay.types';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 
 import { CustomLogger, Logger } from '../logging';
 import { RedisService } from '../redis/redis.service';
 import { GetUpdatedWalletAutoType, LiquidRedisCache } from './liquid.types';
-import { getWalletFromDescriptor } from './lwk.utils';
+import { getWalletFromDescriptor, isTxId } from './lwk.utils';
 
-export const DEFAULT_LIQUID_FEE_MSAT = 15;
+export const DEFAULT_LIQUID_FEE_MSAT = 100;
 /**
  * expressed denominated in virtual bytes
  * example: https://liquid.network/nl/tx/cd1f68dc9a47949c79e06aff35137aa75fef6e191a1e57a5f5fc1ff09fd809d3
@@ -47,6 +48,7 @@ export class LiquidService {
   ): Promise<Pset> {
     const network = Network.mainnet();
     let txBuilder = new TxBuilder(network);
+    txBuilder = txBuilder.enableCtDiscount();
 
     if (!!input.send_all_lbtc) {
       txBuilder = txBuilder
@@ -182,7 +184,15 @@ export class LiquidService {
         'Content-Type': 'text/plain',
       },
     });
-    return res.text();
+
+    const txId = await res.text();
+
+    if (!isTxId(txId)) {
+      this.logger.error(`Failed to broadcast`, { error: txId });
+      throw new GraphQLError(`Error sending money`);
+    }
+
+    return txId;
   }
 
   async getOnchainAddress(

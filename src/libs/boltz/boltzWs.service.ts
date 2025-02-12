@@ -21,6 +21,7 @@ import { TransactionClaimPendingService } from './handlers/transactionClaimPendi
 
 const RESTART_TIMEOUT = 1000 * 5;
 const MAX_RESTART_TIMEOUT = 1000 * 30;
+const HEALTH_CHECK_FAILED_ERR = 'Health check failed';
 
 @Injectable()
 export class BoltzWsService implements OnApplicationBootstrap {
@@ -126,7 +127,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                       this.healthCheckIntervalId = null;
                     }
 
-                    cbk(Error('Health check failed'));
+                    cbk(Error(HEALTH_CHECK_FAILED_ERR));
                   });
 
                   if (!getPendingSwaps.length) return;
@@ -285,7 +286,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
           },
 
           async (err, results) => {
-            if (err) {
+            if (err && err.message !== HEALTH_CHECK_FAILED_ERR) {
               this.logger.error('Websocket Handler Error', { err });
             } else {
               this.logger.debug('Websocket Handler Result', { results });
@@ -298,7 +299,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
               RESTART_TIMEOUT * this.retryCount,
             );
 
-            if (this.retryCount > 5) {
+            if (this.retryCount > 10) {
               this.logger.error(
                 `Unable to establish Boltz websocket connection!`,
               );

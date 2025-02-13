@@ -32,7 +32,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
   healthCheckInterval = 10_000;
   healthCheckIntervalId: NodeJS.Timeout | null = null;
 
-  pingTimeout = 5_000;
+  pingTimeout = 15_000;
   pingTimeoutId: NodeJS.Timeout | null = null;
 
   constructor(
@@ -81,7 +81,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
       this.webSocket.ping();
 
       this.pingTimeoutId = setTimeout(() => {
-        this.logger.warn(`Health check timed out.`);
+        this.logger.error(`Health check timed out.`);
         this.webSocket.terminate();
         cbk();
       }, this.pingTimeout);
@@ -302,6 +302,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
             if (this.retryCount > 10) {
               this.logger.error(
                 `Unable to establish Boltz websocket connection!`,
+                { retryCount: this.retryCount },
               );
             }
 

@@ -110,6 +110,8 @@ model wallet_account_swap {
   response          Json           @db.JsonB
   wallet_account    wallet_account @relation(fields: [wallet_account_id], references: [id])
   wallet_account_id String         @db.Uuid
+
+  @@index([swap_completed], map: "idx_swap_completed")
 }
 
 model account_2fa {

@@ -2,6 +2,7 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { wallet_account_swap } from '@prisma/client';
 import { auto, eachSeries, forever } from 'async';
+import { differenceInMilliseconds } from 'date-fns';
 import { EventsService } from 'src/api/sse/sse.service';
 import { EventTypes } from 'src/api/sse/sse.utils';
 import { AccountRepo } from 'src/repo/account/account.repo';
@@ -34,6 +35,9 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
   pingTimeout = 15_000;
   pingTimeoutId: NodeJS.Timeout | null = null;
+
+  lastPing: Date;
+  lastPingTimeout: 120_000;
 
   constructor(
     private configService: ConfigService,
@@ -74,6 +78,19 @@ export class BoltzWsService implements OnApplicationBootstrap {
     );
   }
 
+  startTimeoutCheck() {
+    setInterval(() => {
+      const msSinceLastPing = differenceInMilliseconds(
+        new Date(),
+        this.lastPing,
+      );
+
+      if (msSinceLastPing >= this.lastPingTimeout) {
+        this.logger.error(`No websocket connection`, { msSinceLastPing });
+      }
+    }, this.healthCheckInterval);
+  }
+
   startHealthCheck(cbk: () => void) {
     this.healthCheckIntervalId = setInterval(() => {
       this.logger.silly(`Send ping to Boltz`);
@@ -96,6 +113,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
   async startSubscription() {
     this.logger.debug('Starting Boltz websocket...');
+    this.startTimeoutCheck();
 
     return forever(
       (next) => {
@@ -115,6 +133,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
                 this.webSocket.on('pong', () => {
                   this.logger.silly(`Pong from Boltz`);
+                  this.lastPing = new Date();
                   this.resetHealthCheckTimeout();
                 });
 
@@ -299,15 +318,8 @@ export class BoltzWsService implements OnApplicationBootstrap {
               RESTART_TIMEOUT * this.retryCount,
             );
 
-            if (this.retryCount > 10) {
-              this.logger.error(
-                `Unable to establish Boltz websocket connection!`,
-                { retryCount: this.retryCount },
-              );
-            }
-
             setTimeout(async () => {
-              this.logger.warn('Restarting...');
+              this.logger.debug('Restarting...');
               next();
             }, retryTime);
           },

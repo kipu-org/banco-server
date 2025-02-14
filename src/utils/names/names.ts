@@ -1,10 +1,6 @@
-import {
-  animals,
-  colors,
-  NumberDictionary,
-  uniqueNamesGenerator,
-} from 'unique-names-generator';
+import { NumberDictionary, uniqueNamesGenerator } from 'unique-names-generator';
 
+import { bip39 } from './bip39';
 import { fruits } from './fruitList';
 
 export const generateFruitName = () => {
@@ -16,12 +12,12 @@ export const generateFruitName = () => {
 };
 
 export const generateMoneyAddress = () => {
-  const numberDictionary = NumberDictionary.generate({ min: 10, max: 99 });
+  const numberDictionary = NumberDictionary.generate({ min: 1000, max: 9999 });
 
   return uniqueNamesGenerator({
-    dictionaries: [colors, animals, numberDictionary],
+    dictionaries: [bip39, numberDictionary],
     separator: '',
     style: 'lowerCase',
-    length: 3,
+    length: 2,
   });
 };

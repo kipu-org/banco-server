@@ -398,8 +398,8 @@ export class WalletMutationsResolver {
       return {
         id: swap.id,
         coin: userInput.deposit_coin,
-        min: userInput.amount.toString(),
-        max: userInput.amount.toString(),
+        min: swap.lockupDetails.amount.toString(),
+        max: swap.lockupDetails.amount.toString(),
         network: SideShiftNetwork.bitcoin,
         receive_address: swap.lockupDetails.lockupAddress,
         bip21: swap.lockupDetails.bip21,

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import DataLoader from 'dataloader';
-import { CoingeckoApiService } from 'src/libs/fiat/coingecko/coingecko.service';
 
 import { FiatService } from '../fiat/fiat.service';
 
@@ -11,10 +10,7 @@ export type DataloaderTypes = {
 
 @Injectable()
 export class DataloaderService {
-  constructor(
-    private readonly fiatService: FiatService,
-    private readonly coingeckoService: CoingeckoApiService,
-  ) {}
+  constructor(private readonly fiatService: FiatService) {}
 
   createLoaders(): DataloaderTypes {
     const priceApiLoader = new DataLoader<Date, number | undefined>(
@@ -23,7 +19,7 @@ export class DataloaderService {
     );
 
     const btcPriceLoader = new DataLoader<string, number>(async (keys) => {
-      const price = await this.coingeckoService.getLatestBtcPrice();
+      const price = await this.fiatService.getLatestBtcPrice();
       return keys.map(() => price);
     });
 

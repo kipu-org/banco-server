@@ -4,11 +4,7 @@ import { CustomLogger, Logger } from 'src/libs/logging';
 import { RedisService } from 'src/libs/redis/redis.service';
 import { fetch } from 'undici';
 
-import {
-  marketChart,
-  ONE_HOUR_IN_SECONDS,
-  simplePrice,
-} from './coingecko.types';
+import { marketChart, simplePrice } from './coingecko.types';
 
 @Injectable()
 export class CoingeckoApiService {
@@ -38,20 +34,6 @@ export class CoingeckoApiService {
       });
       throw new Error('Error getting BTC price!');
     }
-  }
-
-  async getLatestBtcPrice(): Promise<number> {
-    const key = `Coingecko-getLatestBtcPrice`;
-    const cached = await this.cache.get<number>(key);
-
-    if (cached) return cached;
-
-    const price = await this.fetchBtcPrice();
-
-    if (!price) throw new Error('Error fetching BTC price!');
-    await this.cache.set(key, price, { ttl: ONE_HOUR_IN_SECONDS });
-
-    return price;
   }
 
   async getChartData(days = 7, interval = 'daily') {

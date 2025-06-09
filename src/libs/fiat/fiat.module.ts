@@ -5,6 +5,6 @@ import { FiatService } from './fiat.service';
 
 @Module({
   providers: [CoingeckoApiService, FiatService],
-  exports: [FiatService, CoingeckoApiService],
+  exports: [FiatService],
 })
 export class FiatModule {}

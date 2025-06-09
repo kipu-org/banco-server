@@ -42,19 +42,30 @@ export class BoltzWsService implements OnApplicationBootstrap {
     private redlockService: RedlockService,
     private accountRepo: AccountRepo,
     private eventsService: EventsService,
-    @Logger('BoltzService') private logger: CustomLogger,
+    @Logger(BoltzWsService.name) private logger: CustomLogger,
   ) {
-    this.apiUrl = configService.getOrThrow('urls.boltz');
+    this.apiUrl = configService.getOrThrow<string>('urls.boltz');
   }
 
-  async onApplicationBootstrap() {
+  async onApplicationBootstrap(): Promise<void> {
     const enableWebsocket = this.configService.get<boolean>(
       'server.boltz.enableWebsocket',
     );
 
-    if (!enableWebsocket) return;
+    if (!enableWebsocket) {
+      this.logger.debug('Boltz WebSocket disabled by configuration');
+      return;
+    }
 
-    this.startSubscription();
+    try {
+      await this.startSubscription();
+      this.logger.log(`Boltz WebSocket subscription started!`);
+    } catch (error) {
+      this.logger.error(`Failed to start Boltz WebSocket subscription!`, {
+        error,
+      });
+      throw new Error(`Failed to start Boltz WebSocket subscription!`);
+    }
   }
 
   subscribeToSwap(ids: string[]) {

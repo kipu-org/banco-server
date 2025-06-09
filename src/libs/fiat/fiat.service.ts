@@ -13,21 +13,6 @@ export class FiatService {
     private redis: RedisService,
   ) {}
 
-  async getLatestBtcPrice(): Promise<number | undefined> {
-    const key = `FiatService-getLatestBtcPrice`;
-
-    const cached = await this.redis.get<number>(key);
-    if (cached) return cached;
-
-    const price = await this.coingecko.getLatestBtcPrice();
-
-    if (!price) return;
-
-    await this.redis.set(key, price, { ttl: 60 });
-
-    return price;
-  }
-
   async getChartPrices(dates: Date[]): Promise<(number | undefined)[]> {
     // we need a copy of the input array since the dataloader depends in the indices
     const sortedDates = [...dates].sort((a, b) => a.getTime() - b.getTime());

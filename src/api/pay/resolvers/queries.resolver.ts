@@ -10,7 +10,6 @@ import { startOfDay } from 'date-fns';
 import { GraphQLError } from 'graphql';
 import { LnUrlCurrenciesAndInfo } from 'src/api/contact/contact.types';
 import { BoltzService } from 'src/libs/boltz/boltz.service';
-import { FiatService } from 'src/libs/fiat/fiat.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import {
   DEFAULT_LIQUID_FEE_MSAT,
@@ -106,8 +105,6 @@ export class PayQueriesResolver {
 
 @Resolver(FeeAmount)
 export class FeeAmountResolver {
-  constructor(private fiatService: FiatService) {}
-
   @ResolveField()
   id(@Parent() fee: number) {
     return v5(fee.toString(), v5.URL);
@@ -119,10 +116,11 @@ export class FeeAmountResolver {
   }
 
   @ResolveField()
-  async usd(@Parent() fee: number) {
-    const currentUsdPrice = await this.fiatService.getLatestBtcPrice();
+  async usd(@Parent() fee: number, @Context() { loaders }: ContextType) {
+    const currentUsdPrice = await loaders.btcPriceLoader.load('btcPrice');
+
     if (!currentUsdPrice) {
-      throw new GraphQLError(`Cannot get usd fee estimation`);
+      throw new GraphQLError(`Cannot get USD fee estimation!`);
     }
 
     return (currentUsdPrice * fee) / 100_000_000;

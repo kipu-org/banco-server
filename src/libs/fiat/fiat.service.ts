@@ -15,7 +15,7 @@ export class FiatService {
   ) {}
 
   async getLatestBtcPrice(): Promise<number> {
-    const key = `Coingecko-getLatestBtcPrice`;
+    const key = `FiatService-getLatestBtcPrice`;
     const cached = await this.redis.get<number>(key);
 
     if (cached) return cached;

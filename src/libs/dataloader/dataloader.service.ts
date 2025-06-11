@@ -5,11 +5,12 @@ import { FiatService } from '../fiat/fiat.service';
 
 export type DataloaderTypes = {
   priceApiLoader: DataLoader<Date, number | undefined>;
+  btcPriceLoader: DataLoader<string, number>;
 };
 
 @Injectable()
 export class DataloaderService {
-  constructor(private fiatService: FiatService) {}
+  constructor(private readonly fiatService: FiatService) {}
 
   createLoaders(): DataloaderTypes {
     const priceApiLoader = new DataLoader<Date, number | undefined>(
@@ -17,8 +18,14 @@ export class DataloaderService {
         this.fiatService.getChartPrices(dates as Date[]),
     );
 
+    const btcPriceLoader = new DataLoader<string, number>(async (keys) => {
+      const price = await this.fiatService.getLatestBtcPrice();
+      return keys.map(() => price);
+    });
+
     return {
       priceApiLoader,
+      btcPriceLoader,
     };
   }
 }

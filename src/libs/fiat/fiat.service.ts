@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { differenceInDays } from 'date-fns';
+import { ONE_HOUR_IN_SECONDS } from 'src/libs/fiat/coingecko/coingecko.types';
 import { getSHA256Hash } from 'src/utils/crypto/crypto';
 
 import { RedisService } from '../redis/redis.service';
@@ -13,17 +14,15 @@ export class FiatService {
     private redis: RedisService,
   ) {}
 
-  async getLatestBtcPrice(): Promise<number | undefined> {
+  async getLatestBtcPrice(): Promise<number> {
     const key = `FiatService-getLatestBtcPrice`;
-
     const cached = await this.redis.get<number>(key);
     if (cached) return cached;
 
-    const price = await this.coingecko.getLatestBtcPrice();
+    const price = await this.coingecko.fetchBtcPrice();
 
-    if (!price) return;
-
-    await this.redis.set(key, price, { ttl: 60 });
+    if (!price) throw new Error('Error fetching BTC price!');
+    await this.redis.set(key, price, { ttl: ONE_HOUR_IN_SECONDS });
 
     return price;
   }

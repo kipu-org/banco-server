@@ -1,5 +1,12 @@
 import { ConfigService } from '@nestjs/config';
-import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Context,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { wallet_account } from '@prisma/client';
 import { GraphQLError } from 'graphql';
 import { orderBy } from 'lodash';
@@ -9,7 +16,7 @@ import { CurrentUser } from 'src/auth/auth.decorators';
 import { ConfigSchemaType } from 'src/libs/config/validation';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
 import { EsploraLiquidService } from 'src/libs/esplora/liquid.service';
-import { FiatService } from 'src/libs/fiat/fiat.service';
+import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import {
@@ -46,16 +53,14 @@ import {
 
 @Resolver(FiatInfo)
 export class FiatInfoResolver {
-  constructor(private fiatService: FiatService) {}
-
   @ResolveField()
   id() {
     return v5('FiatInfo', v5.URL);
   }
 
   @ResolveField()
-  async fiat_to_btc() {
-    return this.fiatService.getLatestBtcPrice();
+  async fiat_to_btc(@Context() { loaders }: ContextType) {
+    return loaders.btcPriceLoader.load('btcPrice');
   }
 }
 

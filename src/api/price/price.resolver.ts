@@ -8,7 +8,6 @@ import {
 } from '@nestjs/graphql';
 import { differenceInDays, startOfDay, subDays } from 'date-fns';
 import { Public } from 'src/auth/auth.decorators';
-import { FiatService } from 'src/libs/fiat/fiat.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -25,8 +24,6 @@ import {
 
 @Resolver(PricePoint)
 export class PricePointResolver {
-  constructor(private fiatService: FiatService) {}
-
   @ResolveField()
   id(@Parent() { date, currency }: PricePointParent) {
     const finalDate = date || new Date();
@@ -44,7 +41,7 @@ export class PricePointResolver {
     @Parent() { date }: PricePointParent,
     @Context() { loaders }: ContextType,
   ) {
-    if (!date) return this.fiatService.getLatestBtcPrice();
+    if (!date) return loaders.btcPriceLoader.load('btcPrice');
 
     return loaders.priceApiLoader.load(date);
   }

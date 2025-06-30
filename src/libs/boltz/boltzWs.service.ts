@@ -29,10 +29,10 @@ export class BoltzWsService implements OnApplicationBootstrap {
   apiUrl: string;
   retryCount = 0;
 
-  healthCheckInterval = 10_000;
+  healthCheckInterval = 15_000;
   healthCheckIntervalId: NodeJS.Timeout | null = null;
 
-  pingTimeout = 15_000;
+  pingTimeout = 10_000;
   pingTimeoutId: NodeJS.Timeout | null = null;
 
   constructor(
@@ -289,7 +289,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
             if (err && err.message !== HEALTH_CHECK_FAILED_ERR) {
               this.logger.error('Websocket Handler Error', { err });
             } else {
-              this.logger.debug('Websocket Handler Result', { results });
+              this.logger.debug('Websocket Handler Result', { results, err });
             }
 
             this.retryCount = this.retryCount + 1;

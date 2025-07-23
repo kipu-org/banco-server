@@ -109,6 +109,16 @@ export class BoltzWsService implements OnApplicationBootstrap {
               'getPendingSwaps',
               ({ getPendingSwaps }, cbk) => {
                 this.logger.debug(`Setting up Boltz WS`);
+
+                this.startHealthCheck(() => {
+                  if (this.healthCheckIntervalId) {
+                    clearInterval(this.healthCheckIntervalId);
+                    this.healthCheckIntervalId = null;
+                  }
+
+                  cbk(Error(HEALTH_CHECK_FAILED_ERR));
+                });
+
                 const webSocketUrl = `${this.apiUrl.replace('https://', 'wss://')}ws`;
 
                 this.webSocket = new ws(webSocketUrl);
@@ -120,15 +130,6 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
                 this.webSocket.on('open', () => {
                   this.logger.info('Connected to Boltz websocket');
-
-                  this.startHealthCheck(() => {
-                    if (this.healthCheckIntervalId) {
-                      clearInterval(this.healthCheckIntervalId);
-                      this.healthCheckIntervalId = null;
-                    }
-
-                    cbk(Error(HEALTH_CHECK_FAILED_ERR));
-                  });
 
                   if (!getPendingSwaps.length) return;
 

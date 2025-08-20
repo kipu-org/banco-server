@@ -251,7 +251,7 @@ export class BoltzService {
 
     const settingClaimFee = response.claimDetails.amount - amount;
 
-    this.redisService.set(getClaimFeeKey(response.id), settingClaimFee, {
+    await this.redisService.set(getClaimFeeKey(response.id), settingClaimFee, {
       ttl: 60 * 60 * 12,
     });
 

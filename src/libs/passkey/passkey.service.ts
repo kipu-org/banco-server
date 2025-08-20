@@ -23,7 +23,9 @@ export class PasskeyService implements OnModuleInit {
         (res) => res.json() as any,
       );
     } catch (error) {
-      this.logger.error('Error fetching AAGUID JSON array');
+      this.logger.error('Error fetching AAGUID JSON array', {
+        error,
+      });
     }
   }
 

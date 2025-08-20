@@ -106,7 +106,7 @@ export class LnUrlRemoteService {
       if (!parsed.success) return null;
 
       return parsed.data.encryptionPubKey;
-    } catch (error) {
+    } catch {
       return null;
     }
   }

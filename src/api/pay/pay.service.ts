@@ -71,7 +71,7 @@ export class PayService {
         try {
           return findMagicRoutingHint(invoice);
         } catch (error) {
-          throw new Error('Invalid Lightning Invoice');
+          throw new Error(`Invalid Lightning Invoice: ${error}`);
         }
       },
 

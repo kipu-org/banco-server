@@ -58,10 +58,9 @@ export class TransactionClaimPendingService {
 
     try {
       await handlerFunc(swap, arg);
-    } catch (e) {
+    } catch {
       this.logger.debug(`Failed to spend claim transaction cooperatively`, {
         swap,
-        e,
       });
       await handlerFunc(swap, arg, false);
     }
@@ -87,10 +86,9 @@ export class TransactionClaimPendingService {
 
     try {
       await handlerFunc(swap, arg);
-    } catch (e) {
+    } catch {
       this.logger.debug(`Failed to spend claim transaction cooperatively`, {
         swap,
-        e,
       });
       await handlerFunc(swap, arg, false);
     }

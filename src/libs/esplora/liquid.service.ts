@@ -94,7 +94,7 @@ export class EsploraLiquidService {
       const parsed = JSON.parse(text);
 
       return AssetSchema.parse(parsed);
-    } catch (error) {
+    } catch {
       return { name: '', ticker: '', precision: 0 };
     }
   }

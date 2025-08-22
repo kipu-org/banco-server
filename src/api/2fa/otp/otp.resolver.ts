@@ -67,7 +67,7 @@ export class TwoFactorOTPMutationsResolver {
       },
     });
 
-    this.redisService.delete(key);
+    await this.redisService.delete(key);
 
     return true;
   }

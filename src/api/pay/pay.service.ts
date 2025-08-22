@@ -70,8 +70,8 @@ export class PayService {
       checkInvoice: async (): Promise<ProcessInvoiceAuto['checkInvoice']> => {
         try {
           return findMagicRoutingHint(invoice);
-        } catch (error) {
-          throw new Error('Invalid Lightning Invoice');
+        } catch {
+          throw new Error(`Invalid Lightning Invoice`);
         }
       },
 

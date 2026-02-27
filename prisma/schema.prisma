@@ -52,6 +52,7 @@ model wallet_on_accounts {
   contacts              contact[]
 
   @@id([account_id, wallet_id])
+  @@index([account_id])
 }
 
 model contact {
@@ -64,6 +65,7 @@ model contact {
   contact_message       contact_message[]
 
   @@id([wallet_on_accounts_id, money_address])
+  @@index([money_address])
 }
 
 model contact_message {
@@ -124,6 +126,8 @@ model account_2fa {
   enabled    Boolean       @default(true)
   /// [TwoFactorPayload]
   payload    Json          @db.JsonB
+
+  @@index([account_id])
 }
 
 model account_passkey {
@@ -137,6 +141,8 @@ model account_passkey {
   protected_symmetric_key String?  @db.VarChar
   /// [PasskeyPayload]
   payload                 Json     @db.JsonB
+
+  @@index([account_id])
 }
 
 enum two_fa_method {

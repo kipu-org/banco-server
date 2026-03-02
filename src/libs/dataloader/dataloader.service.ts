@@ -1,16 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import DataLoader from 'dataloader';
 
+import { EsploraLiquidService } from '../esplora/liquid.service';
 import { FiatService } from '../fiat/fiat.service';
+
+type AssetInfo = { name: string; ticker: string; precision: number };
 
 export type DataloaderTypes = {
   priceApiLoader: DataLoader<Date, number | undefined>;
   btcPriceLoader: DataLoader<string, number>;
+  assetInfoLoader: DataLoader<string, AssetInfo>;
 };
 
 @Injectable()
 export class DataloaderService {
-  constructor(private readonly fiatService: FiatService) {}
+  constructor(
+    private readonly fiatService: FiatService,
+    private readonly esploraLiquid: EsploraLiquidService,
+  ) {}
 
   createLoaders(): DataloaderTypes {
     const priceApiLoader = new DataLoader<Date, number | undefined>(
@@ -23,9 +30,15 @@ export class DataloaderService {
       return keys.map(() => price);
     });
 
+    const assetInfoLoader = new DataLoader<string, AssetInfo>(
+      async (assetIds: readonly string[]) =>
+        Promise.all(assetIds.map((id) => this.esploraLiquid.getAssetInfo(id))),
+    );
+
     return {
       priceApiLoader,
       btcPriceLoader,
+      assetInfoLoader,
     };
   }
 }

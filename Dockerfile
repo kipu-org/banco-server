@@ -21,7 +21,6 @@ COPY . /app
 # ---------------
 FROM setup AS deps
 
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm i -g prisma
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm run prisma:generate
 
@@ -38,7 +37,6 @@ RUN pnpm run build
 FROM deps AS prod-deps
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm prune --prod --ignore-scripts
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm run prisma:generate
 
 # ---------------
 # Final App

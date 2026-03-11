@@ -26,16 +26,27 @@ export default () => {
       console.log(result.error);
     }
 
-    throw new Error(`Invalid config in yaml file.`);
+    throw new Error(`Invalid configuration file!`);
   }
 
   if (!isProduction) {
     console.log(result.data);
   }
 
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error('No DATABASE_URL defined!');
+  }
+
+  const poolConfig = 'connection_limit=20&pool_timeout=30';
+  const separator = databaseUrl.includes('?') ? '&' : '?';
+  const prismaUrl = `${databaseUrl}${separator}${poolConfig}`;
+
   return {
     isProduction,
     logLevel,
+    prismaUrl,
     ...configYaml,
   };
 };

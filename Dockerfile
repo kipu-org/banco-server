@@ -9,6 +9,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 ENV PNPM_HOME=/usr/local/bin
 ENV DISABLE_OPENCOLLECTIVE=true
+ENV CI=true
 
 RUN apk add --no-cache python3 make g++
 

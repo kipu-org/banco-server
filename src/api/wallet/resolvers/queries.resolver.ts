@@ -15,7 +15,6 @@ import { WalletSwapsParent } from 'src/api/swaps/swaps.types';
 import { CurrentUser } from 'src/auth/auth.decorators';
 import { ConfigSchemaType } from 'src/libs/config/validation';
 import { CryptoService } from 'src/libs/crypto/crypto.service';
-import { EsploraLiquidService } from 'src/libs/esplora/liquid.service';
 import { ContextType } from 'src/libs/graphql/context.type';
 import { LiquidService } from 'src/libs/liquid/liquid.service';
 import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
@@ -66,8 +65,6 @@ export class FiatInfoResolver {
 
 @Resolver(LiquidTransaction)
 export class WalletLiquidTransactionResolver {
-  constructor(private mempoolLiquid: EsploraLiquidService) {}
-
   @ResolveField()
   id(@Parent() { tx, asset_id, wallet_account_id }: WalletTxWithAssetId) {
     return v5(tx.txid().toString() + asset_id + wallet_account_id, v5.URL);
@@ -118,12 +115,13 @@ export class WalletLiquidTransactionResolver {
   @ResolveField()
   async asset_info(
     @Parent() { asset_id }: WalletTxWithAssetId,
+    @Context() { loaders }: ContextType,
   ): Promise<AssetInfoParent> {
     const featured = featuredLiquidAssets.mainnet[asset_id];
 
     if (featured) return { ...featured, is_featured: true, id: asset_id };
 
-    const apiInfo = await this.mempoolLiquid.getAssetInfo(asset_id);
+    const apiInfo = await loaders.assetInfoLoader.load(asset_id);
     return { ...apiInfo, is_featured: false, id: asset_id };
   }
 }
@@ -133,8 +131,6 @@ export class WalletLiquidAssetInfoResolver {}
 
 @Resolver(LiquidAsset)
 export class WalletLiquidAssetResolver {
-  constructor(private mempoolLiquid: EsploraLiquidService) {}
-
   @ResolveField()
   id(@Parent() { asset_id, wallet_id }: AssetParentType) {
     return v5(asset_id + wallet_id, v5.URL);
@@ -153,12 +149,13 @@ export class WalletLiquidAssetResolver {
   @ResolveField()
   async asset_info(
     @Parent() { asset_id }: AssetParentType,
+    @Context() { loaders }: ContextType,
   ): Promise<AssetInfoParent> {
     const featured = featuredLiquidAssets.mainnet[asset_id];
 
     if (featured) return { ...featured, is_featured: true, id: asset_id };
 
-    const apiInfo = await this.mempoolLiquid.getAssetInfo(asset_id);
+    const apiInfo = await loaders.assetInfoLoader.load(asset_id);
     return { ...apiInfo, is_featured: false, id: asset_id };
   }
 }
@@ -196,24 +193,17 @@ export class LiquidAccountResolver {
 
   @ResolveField()
   transactions(@Parent() { wollet, walletAccount }: LiquidAccountParentType) {
-    const txs = wollet.transactions();
+    const txs: WalletTxWithAssetId['tx'][] = wollet.transactions();
 
-    const transactions: WalletTxWithAssetId[] = [];
+    const transactions: WalletTxWithAssetId[] = txs.flatMap((tx) =>
+      Array.from(tx.balance().keys(), (asset_id: string) => ({
+        tx,
+        asset_id,
+        wallet_account_id: walletAccount.id,
+      })),
+    );
 
-    txs.forEach((tx) => {
-      const balances: Map<string, number> = tx.balance();
-      balances.forEach((_, key) =>
-        transactions.push({
-          tx,
-          asset_id: key,
-          wallet_account_id: walletAccount.id,
-        }),
-      );
-    });
-
-    const ordered = orderBy(transactions, (t) => t.tx.timestamp(), 'desc');
-
-    return ordered;
+    return orderBy(transactions, (t) => t.tx.timestamp(), 'desc');
   }
 }
 

@@ -76,11 +76,14 @@ export class BoltzWsService implements OnApplicationBootstrap {
 
   startHealthCheck(cbk: () => void) {
     this.healthCheckIntervalId = setInterval(() => {
+      if (this.pingTimeoutId) return;
+
       this.logger.silly(`Send ping to Boltz`);
 
       this.webSocket.ping();
 
       this.pingTimeoutId = setTimeout(() => {
+        this.pingTimeoutId = null;
         this.logger.error(`Health check timed out.`);
         this.webSocket.terminate();
         cbk();
@@ -92,6 +95,14 @@ export class BoltzWsService implements OnApplicationBootstrap {
     if (!this.pingTimeoutId) return;
     clearTimeout(this.pingTimeoutId);
     this.pingTimeoutId = null;
+  }
+
+  private stopHealthCheck() {
+    if (this.healthCheckIntervalId) {
+      clearInterval(this.healthCheckIntervalId);
+      this.healthCheckIntervalId = null;
+    }
+    this.resetHealthCheckTimeout();
   }
 
   async startSubscription() {
@@ -110,13 +121,16 @@ export class BoltzWsService implements OnApplicationBootstrap {
               ({ getPendingSwaps }, cbk) => {
                 this.logger.debug(`Setting up Boltz WS`);
 
-                this.startHealthCheck(() => {
-                  if (this.healthCheckIntervalId) {
-                    clearInterval(this.healthCheckIntervalId);
-                    this.healthCheckIntervalId = null;
-                  }
+                let cbkCalled = false;
+                const finish = (err?: Error) => {
+                  if (cbkCalled) return;
+                  cbkCalled = true;
+                  this.stopHealthCheck();
+                  cbk(err);
+                };
 
-                  cbk(Error(HEALTH_CHECK_FAILED_ERR));
+                this.startHealthCheck(() => {
+                  finish(Error(HEALTH_CHECK_FAILED_ERR));
                 });
 
                 const webSocketUrl = `${this.apiUrl.replace('https://', 'wss://')}ws`;
@@ -280,7 +294,7 @@ export class BoltzWsService implements OnApplicationBootstrap {
                   this.logger.warn('Error in Boltz websocket', { error });
 
                   this.webSocket.terminate();
-                  cbk(Error('Connection error'));
+                  finish(Error('Connection error'));
                 });
               },
             ],

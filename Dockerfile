@@ -5,7 +5,7 @@ FROM node:20.11.1-alpine AS base
 # ---------------
 FROM base AS setup
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.13.1 --activate
 
 ENV PNPM_HOME=/usr/local/bin
 ENV DISABLE_OPENCOLLECTIVE=true
@@ -43,7 +43,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm prune --prod --ignore-scr
 # ---------------
 FROM base
 
-RUN npm i -g pnpm
+RUN npm i -g pnpm@10.13.1
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}

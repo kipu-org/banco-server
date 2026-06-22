@@ -33,7 +33,7 @@ import {
 } from './boltz.helpers';
 import { BoltzPendingTransactionInterface } from './handler.interface';
 
-const BOLTZ_SAT_VBYTE = 0.01;
+const BOLTZ_SAT_VBYTE = 0.1;
 
 @Injectable()
 export class BoltzPendingLiquidHandler
@@ -173,36 +173,40 @@ export class BoltzPendingLiquidHandler
 
     if (!cooperative) {
       this.logger.debug(`Non cooperative spend`);
-      const claimTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
-        if (!responsePayload.blindingKey) {
-          throw new Error(`Cannot create claim tx without blinding key`);
-        }
-        return constructClaimTransaction(
-          [
-            {
-              ...swapOutput,
-              keys,
-              preimage,
-              cooperative: false,
-              type: OutputType.Taproot,
-              txHash: lockupTx.getHash(),
-              blindingPrivateKey: Buffer.from(
-                responsePayload.blindingKey,
-                'hex',
-              ),
-              swapTree: SwapTreeSerializer.deserializeSwapTree(
-                responsePayload.swapTree,
-              ),
-              internalKey: musig.getAggregatedPublicKey(),
-            },
-          ],
-          address.toOutputScript(destinationAddress, this.network),
-          fee,
-          false,
-          this.network,
-          address.fromConfidential(destinationAddress).blindingKey,
-        );
-      });
+      const claimTx = targetFee(
+        BOLTZ_SAT_VBYTE,
+        (fee) => {
+          if (!responsePayload.blindingKey) {
+            throw new Error(`Cannot create claim tx without blinding key`);
+          }
+          return constructClaimTransaction(
+            [
+              {
+                ...swapOutput,
+                keys,
+                preimage,
+                cooperative: false,
+                type: OutputType.Taproot,
+                txHash: lockupTx.getHash(),
+                blindingPrivateKey: Buffer.from(
+                  responsePayload.blindingKey,
+                  'hex',
+                ),
+                swapTree: SwapTreeSerializer.deserializeSwapTree(
+                  responsePayload.swapTree,
+                ),
+                internalKey: musig.getAggregatedPublicKey(),
+              },
+            ],
+            address.toOutputScript(destinationAddress, this.network),
+            fee,
+            false,
+            this.network,
+            address.fromConfidential(destinationAddress).blindingKey,
+          );
+        },
+        true,
+      );
 
       // Broadcast the finalized transaction
       await this.boltzRest.broadcastTx(claimTx.toHex(), 'L-BTC');
@@ -212,29 +216,36 @@ export class BoltzPendingLiquidHandler
 
     // Create a claim transaction to be signed cooperatively via a key path spend
 
-    const claimTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
-      if (!responsePayload.blindingKey) {
-        throw new Error(`Cannot create claim tx without blinding key`);
-      }
-      return constructClaimTransaction(
-        [
-          {
-            ...swapOutput,
-            keys,
-            preimage,
-            cooperative: true,
-            type: OutputType.Taproot,
-            txHash: lockupTx.getHash(),
-            blindingPrivateKey: Buffer.from(responsePayload.blindingKey, 'hex'),
-          },
-        ],
-        address.toOutputScript(destinationAddress, this.network),
-        fee,
-        false,
-        this.network,
-        address.fromConfidential(destinationAddress).blindingKey,
-      );
-    });
+    const claimTx = targetFee(
+      BOLTZ_SAT_VBYTE,
+      (fee) => {
+        if (!responsePayload.blindingKey) {
+          throw new Error(`Cannot create claim tx without blinding key`);
+        }
+        return constructClaimTransaction(
+          [
+            {
+              ...swapOutput,
+              keys,
+              preimage,
+              cooperative: true,
+              type: OutputType.Taproot,
+              txHash: lockupTx.getHash(),
+              blindingPrivateKey: Buffer.from(
+                responsePayload.blindingKey,
+                'hex',
+              ),
+            },
+          ],
+          address.toOutputScript(destinationAddress, this.network),
+          fee,
+          false,
+          this.network,
+          address.fromConfidential(destinationAddress).blindingKey,
+        );
+      },
+      true,
+    );
 
     // Get the partial signature from Boltz
     const boltzSig = await this.boltzRest.getSigReverseSwap(
@@ -401,30 +412,37 @@ export class BoltzPendingLiquidHandler
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
-    const refundTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
-      if (!responsePayload.blindingKey) {
-        throw new Error(`Cannot create claim tx without blinding key`);
-      }
+    const refundTx = targetFee(
+      BOLTZ_SAT_VBYTE,
+      (fee) => {
+        if (!responsePayload.blindingKey) {
+          throw new Error(`Cannot create claim tx without blinding key`);
+        }
 
-      return constructRefundTransaction(
-        [
-          {
-            ...swapOutput,
-            txHash: lockupTx.getHash(),
-            cooperative: true,
-            type: OutputType.Taproot,
-            keys,
-            blindingPrivateKey: Buffer.from(responsePayload.blindingKey, 'hex'),
-          },
-        ],
-        address.toOutputScript(refundAddress, this.network),
-        0,
-        this.network == networks.liquid ? fee : fee * 10,
-        false,
-        this.network,
-        address.fromConfidential(refundAddress).blindingKey,
-      );
-    });
+        return constructRefundTransaction(
+          [
+            {
+              ...swapOutput,
+              txHash: lockupTx.getHash(),
+              cooperative: true,
+              type: OutputType.Taproot,
+              keys,
+              blindingPrivateKey: Buffer.from(
+                responsePayload.blindingKey,
+                'hex',
+              ),
+            },
+          ],
+          address.toOutputScript(refundAddress, this.network),
+          0,
+          this.network == networks.liquid ? fee : fee * 10,
+          false,
+          this.network,
+          address.fromConfidential(refundAddress).blindingKey,
+        );
+      },
+      true,
+    );
     // Get the partial signature from Boltz
     const boltzSig = await this.boltzRest.postSubmarineRefundInfo(
       responsePayload.id,
@@ -506,33 +524,37 @@ export class BoltzPendingLiquidHandler
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
-    const refundTx = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
-      if (!responsePayload.lockupDetails.blindingKey) {
-        throw new Error(`Cannot create refund tx without blinding key`);
-      }
+    const refundTx = targetFee(
+      BOLTZ_SAT_VBYTE,
+      (fee) => {
+        if (!responsePayload.lockupDetails.blindingKey) {
+          throw new Error(`Cannot create refund tx without blinding key`);
+        }
 
-      return constructRefundTransaction(
-        [
-          {
-            ...swapOutput,
-            keys: refundKeys,
-            cooperative: true,
-            type: OutputType.Taproot,
-            txHash: lockupTx.getHash(),
-            blindingPrivateKey: Buffer.from(
-              responsePayload.lockupDetails.blindingKey,
-              'hex',
-            ),
-          },
-        ],
-        address.toOutputScript(refundAddress, this.network),
-        0,
-        this.network == networks.liquid ? fee : fee * 10,
-        true,
-        this.network,
-        address.fromConfidential(refundAddress).blindingKey,
-      );
-    });
+        return constructRefundTransaction(
+          [
+            {
+              ...swapOutput,
+              keys: refundKeys,
+              cooperative: true,
+              type: OutputType.Taproot,
+              txHash: lockupTx.getHash(),
+              blindingPrivateKey: Buffer.from(
+                responsePayload.lockupDetails.blindingKey,
+                'hex',
+              ),
+            },
+          ],
+          address.toOutputScript(refundAddress, this.network),
+          0,
+          this.network == networks.liquid ? fee : fee * 10,
+          true,
+          this.network,
+          address.fromConfidential(refundAddress).blindingKey,
+        );
+      },
+      true,
+    );
     // Get the partial signature from Boltz
     const boltzSig = await this.boltzRest.postChainRefundInfo(
       responsePayload.id,
@@ -666,38 +688,42 @@ export class BoltzPendingLiquidHandler
     }
 
     // Create a claim transaction to be signed cooperatively via a key path spend
-    const transaction = targetFee(BOLTZ_SAT_VBYTE, (fee) => {
-      if (!responsePayload.claimDetails.blindingKey) {
-        throw new Error(`Cannot create claim tx without blinding key`);
-      }
-      return constructClaimTransaction(
-        [
-          {
-            ...swapOutput,
-            preimage,
-            keys: claimKeys,
-            cooperative,
-            type: OutputType.Taproot,
-            txHash: lockupTx.getHash(),
-            blindingPrivateKey: Buffer.from(
-              responsePayload.claimDetails.blindingKey,
-              'hex',
-            ),
-            ...(!cooperative && {
-              swapTree: SwapTreeSerializer.deserializeSwapTree(
-                responsePayload.claimDetails.swapTree,
+    const transaction = targetFee(
+      BOLTZ_SAT_VBYTE,
+      (fee) => {
+        if (!responsePayload.claimDetails.blindingKey) {
+          throw new Error(`Cannot create claim tx without blinding key`);
+        }
+        return constructClaimTransaction(
+          [
+            {
+              ...swapOutput,
+              preimage,
+              keys: claimKeys,
+              cooperative,
+              type: OutputType.Taproot,
+              txHash: lockupTx.getHash(),
+              blindingPrivateKey: Buffer.from(
+                responsePayload.claimDetails.blindingKey,
+                'hex',
               ),
-              internalKey: musig.getAggregatedPublicKey(),
-            }),
-          },
-        ],
-        address.toOutputScript(destinationAddress, this.network),
-        fee,
-        false,
-        this.network,
-        address.fromConfidential(destinationAddress).blindingKey,
-      );
-    });
+              ...(!cooperative && {
+                swapTree: SwapTreeSerializer.deserializeSwapTree(
+                  responsePayload.claimDetails.swapTree,
+                ),
+                internalKey: musig.getAggregatedPublicKey(),
+              }),
+            },
+          ],
+          address.toOutputScript(destinationAddress, this.network),
+          fee,
+          false,
+          this.network,
+          address.fromConfidential(destinationAddress).blindingKey,
+        );
+      },
+      true,
+    );
 
     return { musig, transaction, swapOutput, boltzPublicKey };
   }

@@ -313,6 +313,12 @@ export class AccountResolver {
     @Args('input') input: SignUpInput,
     @Context() { res }: { res: Response },
   ) {
+    if (input.wallet) {
+      throw new GraphQLError(
+        'BancoLibre is being deprecated. New wallets can no longer be created.',
+      );
+    }
+
     let newAccount: account | undefined;
 
     const { email, referral_code } = input;

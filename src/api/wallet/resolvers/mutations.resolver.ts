@@ -29,7 +29,6 @@ import { WalletRepoService } from 'src/repo/wallet/wallet.repo';
 import { LiquidWalletAssets } from 'src/repo/wallet/wallet.types';
 import { toWithError } from 'src/utils/async';
 
-import { WALLET_LIMIT } from '../wallet.const';
 import {
   BroadcastLiquidTransactionInput,
   CreateLightingInvoiceInput,
@@ -147,15 +146,13 @@ export class WalletMutationsResolver {
 
   @ResolveField()
   async create(
-    @Args('input') input: CreateWalletInput,
-    @CurrentUser() { user_id }: any,
-  ) {
-    const walletCount = await this.walletRepo.countAccountWallets(user_id);
-    if (walletCount >= WALLET_LIMIT) {
-      throw new GraphQLError(`Wallet limit reached`);
-    }
-
-    return this.walletService.createWallet(user_id, input);
+    // The arg must stay declared so the GraphQL schema keeps the input field
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @Args('input') _input: CreateWalletInput,
+  ): Promise<never> {
+    throw new GraphQLError(
+      'BancoLibre is being deprecated. New wallets can no longer be created.',
+    );
   }
 
   @ResolveField()
